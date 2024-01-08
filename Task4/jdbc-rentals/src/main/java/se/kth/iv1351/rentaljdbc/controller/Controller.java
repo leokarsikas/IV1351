@@ -57,9 +57,9 @@ public class Controller {
      * @return The list of instruments.
      * @throws InstrumentException If it failed at getting the instruments.
      */
-    public List<? extends InstrumentDTO> listInstruments() throws InstrumentException{
+    public List<? extends InstrumentDTO> listInstruments(String type) throws InstrumentException{
         try {
-            return rentalDb.findInstruments();
+            return rentalDb.findInstruments(type);
         }
         catch (Exception e) {
             throw new InstrumentException("Unable to list instruments.", e);

@@ -81,9 +81,7 @@ public class BlockingInterpreter {
                         break;
                     case INSTRUMENTS:
                         List<? extends InstrumentDTO> instruments = null;
-                        if (cmdLine.getParameter(0).equals("")) {
-                            instruments = ctrl.listInstruments();
-                        }
+                        instruments = ctrl.listInstruments(cmdLine.getParameter(0));
                         for (InstrumentDTO instrument : instruments) {
                             System.out.println("id: " + instrument.getID() + ", "
                                              + "type: " + instrument.getType() + ", "

@@ -83,10 +83,11 @@ public class RentalDAO {
      * @return The instruments.
      * @throws RentalDBException If failed at getting instruments from the DB.
      */
-    public List<Instrument> findInstruments() throws RentalDBException {
+    public List<Instrument> findInstruments(String type) throws RentalDBException {
         String failureMsg = "Could not list instruments.";
         List<Instrument> instruments = new ArrayList<>();
         try {
+            findAllRentableInstrumentsStmt.setString(1, type);
             ResultSet result = findAllRentableInstrumentsStmt.executeQuery();
             while (result.next()) {
                 instruments.add(new Instrument(result.getInt(INSTRUMENT_ID_COLUMN_NAME),
@@ -135,6 +136,13 @@ public class RentalDAO {
         return null;
     }
 
+    /**
+     * Checks if an instrument is rentable.
+     * 
+     * @param instrumentID The ID of the instrument.
+     * @return A boolean about whether or not the instrument is rentable.
+     * @throws RentalDBException If it fails at checking if the instrument is rentable.
+     */
     public Boolean isInstrumentRentable(Integer instrumentID) throws RentalDBException{
         String failureMsg = "Could not check if the instrument is rentable";
 
@@ -159,6 +167,13 @@ public class RentalDAO {
         return null;
     }
 
+    /**
+     * Checks if a student is allowed to rent an instrument.
+     * 
+     * @param studentID The ID of the student.
+     * @return A boolean about whether or not they are allowed to rent.
+     * @throws RentalDBException If it fails at checking whether the student is allowed to rent or now.
+     */
     public Boolean isStudentAllowedToRent(Integer studentID) throws RentalDBException{
         String failureMsg = "Could not check if the student is allowed to rent";
 
@@ -183,6 +198,14 @@ public class RentalDAO {
         return null;
     }
 
+    /**
+     * Checks if a rental is terminated.
+     * 
+     * @param instrumentID The ID of the instrument.
+     * @param studentID The ID of the student.
+     * @return A boolean about whether or not it's terminated.
+     * @throws RentalDBException If it fails at checking whether the rental is terminated.
+     */
     public Boolean isTerminated(Integer instrumentID, Integer studentID) throws RentalDBException{
         String failureMsg = "Could find information about if the rental is terminated.";
         try{
@@ -244,10 +267,17 @@ public class RentalDAO {
 
     private void prepareStatements() throws SQLException {
                 
-        findAllRentableInstrumentsStmt = connection.prepareStatement("SELECT i.* " +
-            "FROM " + INSTRUMENTS_TABLE_NAME + " i " +
-            "LEFT JOIN " + RENTAL_TABLE_NAME + " r ON i." + INSTRUMENT_ID_COLUMN_NAME + " = r." + INSTRUMENT_ID_COLUMN_NAME + " " +
-            "WHERE r." + RENTAL_END_DATE_COLUMN_NAME + " IS NULL OR r." + RENTAL_END_DATE_COLUMN_NAME + " <= CURRENT_DATE"
+        findAllRentableInstrumentsStmt = connection.prepareStatement(
+            "SELECT i.* FROM " + INSTRUMENTS_TABLE_NAME + " i " +
+            "LEFT JOIN " + RENTAL_TABLE_NAME + " r ON i." + INSTRUMENT_ID_COLUMN_NAME + " = r." + RENTAL_INSTRUMENT_ID_COLUMN_NAME + " " +
+            "WHERE (r." + RENTAL_END_DATE_COLUMN_NAME + " IS NULL OR r." + RENTAL_END_DATE_COLUMN_NAME + " <= CURRENT_DATE) " +
+            "AND i." + INSTRUMENT_TYPE_COLUMN_NAME + " = ? " +
+            "AND NOT EXISTS (" +
+                "SELECT 1 FROM " + RENTAL_TABLE_NAME +
+                " WHERE " + RENTAL_INSTRUMENT_ID_COLUMN_NAME + " = i." + INSTRUMENT_ID_COLUMN_NAME +
+                " AND " + RENTAL_TERMINATED_RENTAL_COLUMN_NAME + " IS NULL AND " +
+                RENTAL_END_DATE_COLUMN_NAME + " > CURRENT_DATE" +
+            ")"
         );
 
         checkAmountOfStudentRentalsStmt = connection.prepareStatement("SELECT CASE WHEN COUNT(DISTINCT " + RENTAL_TABLE_NAME + 
