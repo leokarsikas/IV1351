@@ -108,6 +108,12 @@ ALTER TABLE rental ADD CONSTRAINT PK_rental PRIMARY KEY (instrument_id,student_i
 ALTER TABLE rental
 ADD COLUMN terminated_rental TIMESTAMP;
 
+-- Drop the existing primary key constraint
+ALTER TABLE rental DROP CONSTRAINT PK_rental;
+
+-- Add a new primary key or a unique constraint on required columns
+ALTER TABLE rental ADD CONSTRAINT unique_rental_entry UNIQUE (instrument_id, student_id, start_date, end_date);
+
 
 
 CREATE TABLE sibling (
